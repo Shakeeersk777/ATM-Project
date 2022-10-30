@@ -1,11 +1,13 @@
 import java.util.Scanner;
-class AtmProject
+//interface to hide implementation
+interface AtmManagementSystem
 {
-    public static void main(String[] args)
-    {
-        developProject();
-    }
-	public static void developProject()
+	void developProject();
+}
+//class to provide implementation for interface
+class Implementation implements AtmManagementSystem
+{
+	public void developProject()
 	{
 		Scanner scan = new Scanner(System.in);
         int pin = 123456;
@@ -20,7 +22,7 @@ class AtmProject
         if (customerPin == pin)     // if user input matches with PIN
         {
             //options
-            System.out.println("1. Mini Statement");
+            System.out.println("1. Check balance");
 			System.out.println("2. Deposit");
 			System.out.println("3. Withdraw");
 			System.out.println("4. Exit");
@@ -29,7 +31,7 @@ class AtmProject
 
             switch (option) 
 			{
-                case 1 :    //for ministatement
+                case 1 :    //for balance checking
                 {
                     System.out.println("Your current balance in your account : " + balance);
                     tq();
@@ -84,5 +86,14 @@ class AtmProject
     public static void tq()
     {
         System.out.println("***** Thank you for using our ATM *****");
+    }
+}
+//mainclass for calling Implementation class
+class MainClass
+{
+    public static void main(String[] args)
+    {
+        Implementation implementation = new Implementation();
+		implementation.developProject();
     }
 }
