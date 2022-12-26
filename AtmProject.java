@@ -2,9 +2,11 @@ package atm_project;
 import java.util.Scanner;
 //interface to hide implementation
 interface AtmManagementSystem
-@@ -7,93 +8,147 @@
+{
+	void developProject();
+}
 //class to provide implementation for interface
-class Implementation implements AtmManagementSystem
+class Implementation implements AtmManagementSystem 
 {
 	private double balance = 50000.0;	// Default account balance
 	private int pin = 123456;
@@ -175,7 +177,6 @@ class Implementation implements AtmManagementSystem
     	scan.close();
     }
 }
-//mainclass for calling Implementation class
 //mainclass for calling delevopProject() method
 class MainClass
 {
@@ -183,6 +184,5 @@ class MainClass
     {
         Implementation implementation = new Implementation();
 		implementation.developProject();
-	implementation.developProject();
     }
 }
