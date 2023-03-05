@@ -1,157 +1,334 @@
-package atm_project;
+package com.bank.atm;
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.InputMismatchException;
+import java.util.Random;
 import java.util.Scanner;
-//interface to hide the method implementation
+//INTERFACE WITH ABSTRACT NON-STATIC METHOD
 public interface AtmManagementSystem
 {
-	void developProject();
+	void developProject() throws SQLException, InputMismatchException;
 }
-
-//class to provide implementation for interface
+//MAIN MATHOD TO START EXECUTION
+class MainClass 
+{
+	public static void main(String[] args)
+	{
+		AtmManagementSystem rv = new Implementation();		
+		
+		try 
+		{
+			rv.developProject();
+		} 
+		catch (InputMismatchException e) 
+		{
+			e.getMessage();
+		} 
+		catch (SQLException e) 
+		{
+			e.getMessage();
+		}
+		 
+		
+	}
+}
+//IMPLEMENTATION CLASS FOR AtmManagementSystem INTERFACE
 class Implementation implements AtmManagementSystem
 {
-	private double balance = 50000.0;	// Default account balance
-	private int pin = 123456;
+	private static String url="jdbc:mysql://localhost:3306?user=root&password=12345";
 	
-	public void developProject()
+	public void developProject() throws SQLException, InputMismatchException
 	{
-		    Scanner scan = new Scanner(System.in);
-        System.out.println("************ Welcome to Our Bank ************");
-        
-        System.out.print("Enter PIN Number : ");   // User input for PIN Number
-        
+		System.out.println("************ Welcome to Our Bank ************");
+		//To connect java application with database application
+		Connection connection=DriverManager.getConnection(url);
+		//To verify user pin with user entered pin
+		//Calling Storing procedure from database
+		CallableStatement callableStatement=connection.prepareCall("CALL shakeerbank_database.RetreiveDataFromAcctHolderUsing_pin(?)");       
+        // User input for PIN Number
+		Scanner scan = new Scanner(System.in);
+        System.out.print("Enter PIN Number : ");
         int customerPin = scan.nextInt();
-        //Object creation to call non-static members
-        Implementation i=new Implementation();
-        
-        // if user input matches with PIN
-        if (customerPin == pin)     
+        //assigning user input for place holders	
+        callableStatement.setInt(1, customerPin);
+        //execute query	
+        ResultSet resultSet=callableStatement.executeQuery();
+        //if last record present
+        if(resultSet.last())
         {
-            //options
-            System.out.println("1. Check balance");
-            System.out.println("2. Deposit");
-            System.out.println("3. Withdraw");
-            System.out.println("4. Set New Pin");
-            System.out.println("5. Exit");
-            System.out.println("Please select any one option :");
-            
-            int option = scan.nextInt();
-
-            switch (option) 
-			      {
-                case 1 :    //for balance checking
-                {
-                      i.getBalance();
-                      tq();
-                }
-				        break;
-
-                case 2 :     //for deposit
-                {
-                    System.out.println("Enter deposit amount: ");
-                    double deposit = scan.nextInt();
-                    i.depositAmount(deposit);
-                    tq();
-                }
-				        break;
-
-                case 3 :    //for withdrawal
-                {
-                	  System.out.print("Enter your withdrawal amount : ");
-                    double withdraw = scan.nextInt();
-                    i.withdrawalAmount(withdraw);
-                    tq();
-                }
-				        break;
-				
-                case 4 :
-                {
-                	  System.out.println("Enter Two Step Verfication password to set new pin: ");
-                    int securityPin=scan.nextInt();
-                    i.setPin(securityPin);
-                }
-                break;
-                
-                case 5 :
-                {
-                   System.exit(0);
-                }
-                default: System.err.println("Please select valid option");
-            }
+        	//to come cursor from last position to bfr position
+        	resultSet.beforeFirst();
+        	while(resultSet.next())
+       		{
+       			Implementation i=new Implementation();
+                         
+                //options
+                System.out.println("1. Check balance");
+                System.out.println("2. Deposit");
+           		System.out.println("3. Withdraw");
+    			System.out.println("4. Set New Pin");
+            	System.out.println("5. Exit");
+                System.out.println("Please select any one option :");
+                      
+                int option = scan.nextInt();
+              	switch (option) 
+              	{
+              		//for balance checking
+              		case 1 :    
+                    {
+                                	
+                    	i.getBalance();
+                        tq();
+                    }
+                    break;
+                    //for deposit
+                    case 2 :     
+                    {
+                        i.depositAmount();
+                        tq();
+                    }
+                    break;
+                    //for withdrawal
+                    case 3 :    
+                    {
+                        i.withdrawalAmount();
+                        tq();
+                    }
+                    break;
+                	//to set new pin			
+                    case 4 :
+                    {
+                        i.setPin();
+                    }
+                    break;
+                    //to exit jvm        
+                    case 5 :
+                    {
+                        System.exit(0);
+                    }
+                    default: System.err.println("Please select valid option");
+                 }
+       		}
         }
-        //if user input not matched then else will be executed
         else
         {
-            System.err.println("Invalid PIN");
+        	System.err.println("Data not found....");
         }
         scan.close();
+    }	
+	//Balance enquiry implementation
+	public void getBalance() throws SQLException, InputMismatchException
+	{	
+		//To connect java application with database application
+		Connection connection=DriverManager.getConnection(url);
+		//To verify user pin with user entered pin
+		//Calling Storing procedure from database
+		CallableStatement callableStatement=connection.prepareCall("CALL shakeerbank_database.RetreiveDataFromAcctHolder");
+        	
+        ResultSet resultSet=callableStatement.executeQuery();
+        	
+        if(resultSet.last())
+        {
+        	resultSet.beforeFirst();
+        	while(resultSet.next())
+       		{
+        		System.out.println("Your current balance in your account : " + resultSet.getDouble("balance"));
+       		}
+        }
+        else
+        {
+        	System.err.println("Data not found....");
+        }       
 	}
-	//Balance Enquiry implementation
-	public void getBalance()
-	{
-		System.out.println("Your current balance in your account : " + balance);
-	}
- 
+	
 	//Deposit Amount Implementation
-	public void depositAmount(double deposit)
+	public void depositAmount() throws SQLException, InputMismatchException
 	{
-		if (deposit>=100)
-		{
-	        double totalAmount = deposit + balance;
-	        System.out.println("Your current balance in your account : " + totalAmount);
-		}
-		else
-		{
-			  System.err.println("Please deposit more than 100 Rupees only");
-		}
-	}
-	//Amount Withdrawal Implementation
-	public void withdrawalAmount(double withdraw)
-	{
+		Scanner scan = new Scanner(System.in);
 		
-		if (withdraw<100)
+		System.out.print("Enter your deposit amount : ");
+        double deposit = scan.nextDouble();
+			
+	    if (deposit>=100)
 		{
-			System.err.println("Please enter amount above 100 only");
+	    	Connection connection = DriverManager.getConnection(url);
+	    	//To verify user pin with user entered pin
+			//Calling Storing procedure from database
+	    	CallableStatement callableStatement=connection.prepareCall("CALL shakeerbank_database.RetreiveDataFromAcctHolder");
+	        
+		    ResultSet resultSet=callableStatement.executeQuery();
+		    
+		    if(resultSet.last())
+	        {
+	        	resultSet.beforeFirst();
+	        	while(resultSet.next())
+	       		{	    	
+	        		CallableStatement callableStatement2=connection.prepareCall("CALL shakeerbank_database.UpdateBalance(?,?)");
+	        		
+	        		double totalAmount= deposit + resultSet.getDouble("balance");
+	        		
+	        		callableStatement2.setDouble(1, totalAmount);
+		        	int pin=resultSet.getInt("pin");
+		        	
+					callableStatement2.setInt(2, pin); 
+					
+					callableStatement2.executeUpdate();	
+	    	 
+					System.out.println("Amount successfully deposited");
+		     	       		    		    	        		    		    				    			    						 		    				
+					//Storing transactions in database
+		    		
+					Date date = new Date();
+					String currentDate=date.toString();
+					
+					CallableStatement callableStatement3=connection.prepareCall("CALL shakeerbank_database.StoringTransactions(?)");
+		    				
+					
+					callableStatement3.setString(1, currentDate);
+	    				
+					String transaction=deposit+" deposited into your bank account";
+					
+					callableStatement3.setString(1, transaction);
+					
+					callableStatement3.executeUpdate();
+	       		}
+	        }
+		}		        
+	    else
+		{
+			System.err.println("Please deposit more than 100 Rupees only");
 		}
-		else if (withdraw>balance)
+	    scan.close();
+	  }
+	          
+	//Amount Withdrawal Implementation
+	public void withdrawalAmount() throws SQLException, InputMismatchException
+	{
+		Scanner scan = new Scanner(System.in);
+		//To connect java application with database application
+		Connection connection = DriverManager.getConnection(url);
+		//To verify user pin with user entered pin
+		//Calling Storing procedure from database
+		CallableStatement callableStatement=connection.prepareCall("CALL shakeerbank_database.RetreiveDataFromAcctHolder");
+        
+	    ResultSet resultSet=callableStatement.executeQuery();
+	    
+	    if(resultSet.last())
+        {
+	    	double balance=resultSet.getDouble("balance");
+        	resultSet.beforeFirst();
+        	while(resultSet.next())
+       		{
+        		System.out.print("Enter your withdrawal amount : ");
+    	        double withdraw = scan.nextDouble();
+    	            	      	            	        
+    	        if (withdraw<100)
+				{
+					System.err.println("Please enter amount above 100 only");
+				}
+				else if (withdraw>balance)
+				{
+					System.err.println("Insufficient funds");
+				}
+				else if(withdraw%2==0)
+				{
+					CallableStatement callableStatement2=connection.prepareCall("CALL shakeerbank_database.UpdateBalance(?,?)");
+		            
+		        	double totalAmount= resultSet.getDouble("balance") - withdraw;
+		        	
+		        	callableStatement2.setDouble(1, totalAmount);
+		        	int pin=resultSet.getInt("pin");
+		        	
+					callableStatement2.setInt(2, pin); 
+					
+					callableStatement2.executeUpdate();	
+					
+					System.out.println("Your current balance in your account : " + totalAmount);
+				}
+				else
+				{
+					System.err.println("Please valid amount only");
+				}
+       		}
+        }
+	    else
+	    {
+	        System.err.println("Invalid PIN...");
+	    }
+		scan.close();
+	}	
+    
+    //to Set new pin
+    public void setPin() throws SQLException, InputMismatchException
+    {
+		
+    	//To connect java application with database application
+		Connection connection=DriverManager.getConnection(url);
+		//To verify user pin with user entered pin
+		//Calling Storing procedure from database
+		CallableStatement callableStatement=connection.prepareCall("CALL shakeerbank_database.RetreiveDataFromAcctHolderUsing_pin_mobile(?,?)");
+		
+		Scanner scanner=new Scanner(System.in);
+		System.out.println("Enter Old PIN : ");
+		int pin=scanner.nextInt();
+		callableStatement.setInt(1, pin);
+		
+		System.out.println("Enter your mobile number : ");
+		String mobile=scanner.next();
+		callableStatement.setString(2, mobile);
+		
+		ResultSet resultSet=callableStatement.executeQuery();
+		
+		if(resultSet.last())
 		{
-			System.err.println("Insufficient funds");
+			resultSet.beforeFirst();
+			while(resultSet.next())
+			{
+				Random random=new Random();
+				int num=random.nextInt(10000);
+				if(num<1000)
+				{
+					num+=1000;
+				}		
+				System.out.println("Otp : "+num);
+				System.out.println("Enter Otp: ");
+				int userOtp=scanner.nextInt();
+				
+				if(userOtp==num) 
+				{
+					System.out.println("Otp verified");
+					
+					CallableStatement callableStatement2=connection.prepareCall("CALL shakeerbank_database.UpdatePin(?,?)");
+				    
+					System.out.println("Enter New PIN : ");
+				    int newPin=scanner.nextInt();				    
+				    
+				    callableStatement2.setInt(1, newPin);
+				    callableStatement2.setString(2, mobile);			
+				    		
+				    callableStatement2.executeUpdate();				    
+				    System.out.println("Pin is successfully updated. Please contact 1234567890 incase you not done ");	
+				}
+				else
+				{
+					System.err.println("Invalid Otp");
+				}
+			}
 		}
 		else
 		{
-			double currentAmount = balance - withdraw;
-			System.out.println("Your current balance in your account : " + currentAmount);
+			System.err.println("Data doesn't exist..");
 		}
-	}
+		scanner.close();
+    }
     // developer defined static method for wish
     public static void tq()
     {
         System.out.println("***** Thank you for visiting our ATM *****");
     }
-    //to Set new pin
-    public void setPin(int securityPin)
-    {
-        Scanner scan = new Scanner(System.in);
-        int twoStepVerificationPin=1111;
-        if(securityPin==twoStepVerificationPin)
-        {
-          System.out.println("Enter new Pin: ");
-          int newPin=scan.nextInt();
-          this.pin=newPin;
-          System.out.println("Pin is successfully updated. Please contact 1234567890 incase you not done ");
-        }
-        else
-        {
-          System.err.println("Two Step Verfication password not matched");
-        }
-        scan.close();
-    }
-}
-//MainClass to call developProject() method
-public class MainClass
-{
-	public static void main(String[] args) 
-	{
-		AtmManagementSystem rv = new Implementation();
-		rv.developProject();
-	}
 }
